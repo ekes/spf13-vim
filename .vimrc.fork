@@ -1,0 +1,3 @@
+" Regenerate tag file for project. You must run this from the root of the project.
+" This allows you to navigate the tags throughout your project.
+nmap <silent> <leader>tg :!ctags -f ./tags --langmap="php:+.inc.module" -h ".php.inc" -R --totals=yes --tag-relative=yes --PHP-kinds=+cf-v . <CR>
