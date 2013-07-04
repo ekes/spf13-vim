@@ -16,7 +16,7 @@ endif
 " https://drupal.org/node/1419988
 let g:syntastic_mode_map = { 'mode': 'active', 'active_filetypes': ['php', 'css', 'html', 'xhtml', 'javascript'], 'passive_filetypes': [] }
 let g:syntastic_php_checkers=['php', 'phpcs', 'phpmd']
-let g:syntastic_phpcs_conf="--standard=Drupal"
+let g:syntastic_php_phpcs_args="--standard=Drupal"
 
 set tabstop=2
 set shiftwidth=2
