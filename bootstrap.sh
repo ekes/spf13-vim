@@ -31,7 +31,7 @@ branch="3.0"
 if [ ! -e $endpath/.git ]; then
     endpath="$HOME/.spf13-vim-3"
     echo "cloning spf13-vim"
-    git clone --recursive -b $branch https://github.com/spf13/spf13-vim.git $endpath
+    git clone --recursive -b $branch https://github.com/VeggieMeat/spf13-vim.git $endpath
 else
     echo "updating spf13-vim"
     cd $endpath && git pull origin $branch
