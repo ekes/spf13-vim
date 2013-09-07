@@ -11,7 +11,7 @@ spf13-vim is a distribution of vim plugins and resources for Vim, Gvim and [MacV
 
 It is a good starting point for anyone intending to use VIM for development running equally well on Windows, Linux, \*nix and Mac.
 
-The distribution is completely customisable using a `~/.vimrc.local` and `~/.vimrc.bundles.local` Vim RC files.
+The distribution is completely customisable using a `~/.vimrc.local`, `~/.vimrc.bundles.local`, and `~/.vimrc.before.local` Vim RC files.
 
 ![spf13-vim image][spf13-vim-img]
 
@@ -43,6 +43,7 @@ The easiest way to install spf13-vim is to use our [automatic installer](https:/
 ```bash
     
     curl https://raw.github.com/VeggieMeat/spf13-vim/3.0/bootstrap.sh -L > spf13-vim.sh && sh spf13-vim.sh
+
 ```
 
 If you have a bash-compatible shell you can run the script directly:
@@ -151,20 +152,34 @@ For example, to override the default color schemes:
     echo colorscheme ir_black  >> ~/.vimrc.local
 ```
 
+### Before File
+
+Create a `~/.vimrc.before.local` file to define any customizations
+that get loaded *before* the spf13-vim `.vimrc`.
+
+For example, to prevent autocd into a file directory:
+```bash
+    echo let g:spf13_no_autochdir = 1 >> ~/.vimrc.before.local
+```
+For a list of available spf13-vim specific customization options, look at the `~/.vimrc.before` file.
+
+
 ### Fork Customization
 
 There is an additional tier of customization available to those who want to maintain a
 fork of spf13-vim specialized for a particular group. These users can create `.vimrc.fork`
 and `.vimrc.bundles.fork` files in the root of their fork.  The load order for the configuration is:
 
-1. `.vimrc.bundles.local` - local user bundle configuration
-2. `.vimrc.bundles.fork` - fork bundle configuration
-3. `.vimrc.bundles` - spf13-vim bundle configuration
-4. `.vimrc` - spf13-vim vim configuration
-5. `.vimrc.fork` - fork vim configuration
-6. `.vimrc.local` - local user configuration
+1. `.vimrc.before.local` - before user configuration
+2. `.vimrc.before.fork` - fork before configuration
+3. `.vimrc.bundles.local` - local user bundle configuration
+4. `.vimrc.bundles.fork` - fork bundle configuration
+5. `.vimrc.bundles` - spf13-vim bundle configuration
+6. `.vimrc` - spf13-vim vim configuration
+7. `.vimrc.fork` - fork vim configuration
+8. `.vimrc.local` - local user configuration
 
-See `.vimrc.bundles` for specifics on what options can be set to override bundle configuration. See `.vimrc` for specifics
+See `.vimrc.bundles` for specifics on what options can be set to override bundle configuration. See `.vimrc.before` for specifics
 on what options can be overridden. Most vim configuration options should be set in your `.vimrc.fork` file, bundle configuration
 needs to be set in your `.vimrc.bundles.fork` file.
 
@@ -384,6 +399,14 @@ For example this screen shot demonstrates pressing `,,w`
 
 ![easymotion image][easymotion-img]
 
+## [Airline]
+
+Airline provides a lightweight themable statusline with no external dependencies. By default it uses the symbols `‹` and `›` as separators for different statusline sections but can be configured to use the same symbols as [Powerline]. An example with and without powerline symbols is shown here:
+
+![airline image][airline-img]
+
+To enable powerline symbols first install one of the [Powerline Fonts] or patch your favorite font using the provided instructions. Configure your terminal, MacVim, or Gvim to use the desired font. Finally add `let g:airline_powerline_fonts=1` to your `.vimrc.before.local`.
+
 ## Additional Syntaxes
 
 spf13-vim ships with a few additional syntaxes:
@@ -468,6 +491,9 @@ Here's some tips if you've never used VIM before:
 [Matchit]:http://www.vim.org/scripts/script.php?script_id=39
 [Tabularize]:https://github.com/godlygeek/tabular
 [EasyMotion]:https://github.com/Lokaltog/vim-easymotion
+[Airline]:https://github.com/bling/vim-airline
+[Powerline]:https://github.com/lokaltog/powerline
+[Powerline Fonts]:https://github.com/Lokaltog/powerline-fonts
 
 [spf13-vim-img]:https://i.imgur.com/UKToY.png
 [spf13-vimrc-img]:https://i.imgur.com/kZWj1.png
@@ -477,3 +503,4 @@ Here's some tips if you've never used VIM before:
 [nerdtree-img]:https://i.imgur.com/9xIfu.png
 [phpmanual-img]:https://i.imgur.com/c0GGP.png
 [easymotion-img]:https://i.imgur.com/ZsrVL.png
+[airline-img]:https://i.imgur.com/sU0PG5P.png

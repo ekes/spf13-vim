@@ -15,6 +15,21 @@
 "   You can find me at http://spf13.com
 " }
 
+" Before {
+
+    " Use local before if available {
+        if filereadable(expand("~/.vimrc.before.local"))
+            source ~/.vimrc.before.local
+        endif
+    " }
+
+    " Use fork before if available {
+        if filereadable(expand("~/.vimrc.before.fork"))
+            source ~/.vimrc.before.fork
+        endif
+    " }
+" }
+
 " Environment {
 
     " Basics {
@@ -84,7 +99,7 @@
 
     " Most prefer to automatically switch to the current file directory when
     " a new buffer is opened; to prevent this behavior, add the following to
-    " your .vimrc.bundles.local file:
+    " your .vimrc.before.local file:
     "   let g:spf13_no_autochdir = 1
     if !exists('g:spf13_no_autochdir')
         autocmd BufEnter * if bufname("") !~ "^\[A-Za-z0-9\]*://" | lcd %:p:h | endif
@@ -111,7 +126,7 @@
             set undoreload=10000        " Maximum number lines to save for undo on a buffer reload
         endif
 
-        " To disable views add the following to your .vimrc.bundles.local file:
+        " To disable views add the following to your .vimrc.before.local file:
         "   let g:spf13_no_views = 1
         if !exists('g:spf13_no_views')
             " Add exclusions to mkview and loadview
@@ -128,11 +143,12 @@
 
     if filereadable(expand("~/.vim/bundle/vim-colors-solarized/colors/solarized.vim"))
         let g:solarized_termcolors=256
-        color solarized                 " Load a colorscheme
-    endif
         let g:solarized_termtrans=1
         let g:solarized_contrast="high"
         let g:solarized_visibility="high"
+        color solarized             " Load a colorscheme
+    endif
+
     set tabpagemax=15               " Only show 15 tabs
     set showmode                    " Display the current mode
 
@@ -140,6 +156,10 @@
 
     highlight clear SignColumn      " SignColumn should match background for
                                     " things like vim-gitgutter
+
+    highlight clear LineNr          " Current line number row will have same background color in relative mode.
+                                    " Things like vim-gitgutter will match LineNr highlight
+    "highlight clear CursorLineNr    " Remove highlight color from current line number
 
     if has('cmdline_info')
         set ruler                   " Show the ruler
@@ -188,6 +208,9 @@
     set expandtab                   " Tabs are spaces, not tabs
     set tabstop=4                   " An indentation every four columns
     set softtabstop=4               " Let backspace delete indent
+    set nojoinspaces                " Prevents inserting two spaces after punctuation on a join (J)
+    set splitright                  " Puts new vsplit windows to the right of the current
+    set splitbelow                  " Puts new split windows to the bottom of the current
     "set matchpairs+=<:>             " Match, to be used with %
     set pastetoggle=<F12>           " pastetoggle (sane indentation on pastes)
     "set comments=sl:/*,mb:*,elx:*/  " auto format comment blocks
@@ -196,7 +219,14 @@
     autocmd FileType go autocmd BufWritePre <buffer> Fmt
     autocmd BufNewFile,BufRead *.html.twig set filetype=html.twig
     autocmd FileType haskell setlocal expandtab shiftwidth=2 softtabstop=2
+    " preceding line best in a plugin but here for now.
+
     autocmd BufNewFile,BufRead *.coffee set filetype=coffee
+
+    " Workaround vim-commentary for Haskell
+    autocmd FileType haskell setlocal commentstring=--\ %s
+    " Workaround broken colour highlighting in Haskell
+    autocmd FileType haskell setlocal nospell
 
 " }
 
@@ -204,7 +234,7 @@
 
     " The default leader is '\', but many people prefer ',' as it's in a standard
     " location. To override this behavior and set it back to '\' (or any other
-    " character) add the following to your .vimrc.bundles.local file:
+    " character) add the following to your .vimrc.before.local file:
     "   let g:spf13_leader='\'
     if !exists('g:spf13_leader')
         let mapleader = ','
@@ -214,9 +244,9 @@
 
     " Easier moving in tabs and windows
     " The lines conflict with the default digraph mapping of <C-K>
-    " If you prefer that functionality, add let g:spf13_no_easyWindows = 1
-    " in your .vimrc.bundles.local file
-
+    " If you prefer that functionality, add the following to your
+    " .vimrc.before.local file:
+    "   let g:spf13_no_easyWindows = 1
     if !exists('g:spf13_no_easyWindows')
         map <C-J> <C-W>j<C-W>_
         map <C-K> <C-W>k<C-W>_
@@ -225,13 +255,13 @@
     endif
 
     " Wrapped lines goes down/up to next row, rather than next line in file.
-    nnoremap j gj
-    nnoremap k gk
+    noremap j gj
+    noremap k gk
 
     " The following two lines conflict with moving to top and
     " bottom of the screen
     " If you prefer that functionality, add the following to your
-    " .vimrc.bundles.local file:
+    " .vimrc.before.local file:
     "   let g:spf13_no_fastTabs = 1
     if !exists('g:spf13_no_fastTabs')
         map <S-H> gT
@@ -270,8 +300,19 @@
     nmap <leader>f8 :set foldlevel=8<CR>
     nmap <leader>f9 :set foldlevel=9<CR>
 
-    " Toggle search highlighting
-    nmap <silent> <leader>/ :set invhlsearch<CR>
+    " Most prefer to toggle search highlighting rather than clear the current
+    " search results. To clear search highlighting rather than toggle it on
+    " and off, add the following to your .vimrc.before.local file:
+    "   let g:spf13_clear_search_highlight = 1
+    if exists('g:spf13_clear_search_highlight')
+        nmap <silent> <leader>/ :nohlsearch<CR>
+    else
+        nmap <silent> <leader>/ :set invhlsearch<CR>
+    endif
+
+
+    " Find merge conflict markers
+    map <leader>fc /\v^[<\|=>]{7}( .*\|$)<CR>
 
     " Shortcuts
     " Change Working Directory to that of the current file
@@ -281,6 +322,10 @@
     " Visual shifting (does not exit Visual mode)
     vnoremap < <gv
     vnoremap > >gv
+
+    " Allow using the repeat operator with a visual selection (!)
+    " http://stackoverflow.com/a/8064607/127816
+    vnoremap . :normal .<CR>
 
     " Fix home and end keybindings for screen, particularly on mac
     " - for some reason this fixes the arrow keys too. huh.
@@ -352,6 +397,12 @@
 
     " Ctags {
         set tags=./tags;/,~/.vimtags
+
+        " Make tags placed in .git/tags file available in all levels of a repository
+        let gitroot = substitute(system('git rev-parse --show-toplevel'), '[\n\r]', '', 'g')
+        if gitroot != ''
+            let &tags = &tags . ',' . gitroot . '/.git/tags'
+        endif
     " }
 
     " AutoCloseTag {
@@ -460,7 +511,7 @@
     "}
 
     " PythonMode {
-    " Disable if python support not present
+        " Disable if python support not present
         if !has('python')
             let g:pymode = 1
         endif
@@ -473,9 +524,111 @@
         nnoremap <silent> <leader>gb :Gblame<CR>
         nnoremap <silent> <leader>gl :Glog<CR>
         nnoremap <silent> <leader>gp :Git push<CR>
+        nnoremap <silent> <leader>gr :Gread<CR>:GitGutter<CR>
         nnoremap <silent> <leader>gw :Gwrite<CR>:GitGutter<CR>
+        nnoremap <silent> <leader>ge :Gedit<CR>
         nnoremap <silent> <leader>gg :GitGutterToggle<CR>
     "}
+
+    " neocomplete {
+        if count(g:spf13_bundle_groups, 'neocomplete')
+            let g:acp_enableAtStartup = 0
+            let g:neocomplete#enable_at_startup = 1
+            let g:neocomplete#enable_smart_case = 1
+            let g:neocomplete#enable_auto_delimiter = 1
+            let g:neocomplete#max_list = 15
+            let g:neocomplete#force_overwrite_completefunc = 1
+
+            " SuperTab like snippets behavior.
+            imap <silent><expr><TAB> neosnippet#expandable() ?
+                        \ "\<Plug>(neosnippet_expand_or_jump)" : (pumvisible() ?
+                        \ "\<C-e>" : "\<TAB>")
+            smap <TAB> <Right><Plug>(neosnippet_jump_or_expand)
+
+            " Define dictionary.
+            let g:neocomplete#sources#dictionary#dictionaries = {
+                        \ 'default' : '',
+                        \ 'vimshell' : $HOME.'/.vimshell_hist',
+                        \ 'scheme' : $HOME.'/.gosh_completions'
+                        \ }
+
+            " Define keyword.
+            if !exists('g:neocomplete#keyword_patterns')
+                let g:neocomplete#keyword_patterns = {}
+            endif
+            let g:neocomplete#keyword_patterns['default'] = '\h\w*'
+
+            " Plugin key-mappings {
+                " These two lines conflict with the default digraph mapping of <C-K>
+                " If you prefer that functionality, add the following to your
+                " .vimrc.before.local file:
+                "   let g:spf13_no_neosnippet_expand = 1
+                if !exists('g:spf13_no_neosnippet_expand')
+                    imap <C-k> <Plug>(neosnippet_expand_or_jump)
+                    smap <C-k> <Plug>(neosnippet_expand_or_jump)
+                endif
+
+                inoremap <expr><C-g> neocomplete#undo_completion()
+                inoremap <expr><C-l> neocomplete#complete_common_string()
+                inoremap <expr><CR> neocomplete#complete_common_string()
+
+                " <TAB>: completion.
+                inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+                inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
+
+                " <CR>: close popup
+                " <s-CR>: close popup and save indent.
+                inoremap <expr><s-CR> pumvisible() ? neocomplete#close_popup()"\<CR>" : "\<CR>"
+                inoremap <expr><CR> pumvisible() ? neocomplete#close_popup() : "\<CR>"
+
+                " <C-h>, <BS>: close popup and delete backword char.
+                inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
+                inoremap <expr><C-y> neocomplete#close_popup()
+            " }
+
+            " Enable omni completion.
+            autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
+            autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+            autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+            autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
+            autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
+            autocmd FileType ruby setlocal omnifunc=rubycomplete#Complete
+            autocmd FileType haskell setlocal omnifunc=necoghc#omnifunc
+
+            " Haskell post write lint and check with ghcmod
+            " $ `cabal install ghcmod` if missing and ensure
+            " ~/.cabal/bin is in your $PATH.
+            if !executable("ghcmod")
+                autocmd BufWritePost *.hs GhcModCheckAndLintAsync
+            endif
+
+            " Enable heavy omni completion.
+            if !exists('g:neocomplete#sources#omni#input_patterns')
+                let g:neocomplete#sources#omni#input_patterns = {}
+            endif
+            let g:neocomplete#sources#omni#input_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
+            let g:neocomplete#sources#omni#input_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
+            let g:neocomplete#sources#omni#input_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
+            let g:neocomplete#sources#omni#input_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
+            let g:neocomplete#sources#omni#input_patterns.ruby = '[^. *\t]\.\h\w*\|\h\w*::'
+
+            " Use honza's snippets.
+            let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
+
+            " Enable neosnippet snipmate compatibility mode
+            let g:neosnippet#enable_snipmate_compatibility = 1
+
+            " For snippet_complete marker.
+            if has('conceal')
+                set conceallevel=2 concealcursor=i
+            endif
+
+            " Disable the neosnippet preview candidate window
+            " When enabled, there can be too much visual noise
+            " especially when splits are used.
+            set completeopt-=preview
+        endif
+    " }
 
     " neocomplcache {
         if count(g:spf13_bundle_groups, 'neocomplcache')
@@ -507,34 +660,33 @@
             endif
             let g:neocomplcache_keyword_patterns._ = '\h\w*'
 
-            " Plugin key-mappings.
+            " Plugin key-mappings {
+                " These two lines conflict with the default digraph mapping of <C-K>
+                " If you prefer that functionality, add the following to your
+                " .vimrc.before.local file:
+                "   let g:spf13_no_neosnippet_expand = 1
+                if !exists('g:spf13_no_neosnippet_expand')
+                    imap <C-k> <Plug>(neosnippet_expand_or_jump)
+                    smap <C-k> <Plug>(neosnippet_expand_or_jump)
+                endif
 
-            " These two lines conflict with the default digraph mapping of <C-K>
-            " If you prefer that functionality, add
-            " let g:spf13_no_neosnippet_expand = 1
-            " in your .vimrc.bundles.local file
+                inoremap <expr><C-g> neocomplcache#undo_completion()
+                inoremap <expr><C-l> neocomplcache#complete_common_string()
+                inoremap <expr><CR> neocomplcache#complete_common_string()
 
-            if !exists('g:spf13_no_neosnippet_expand')
-                imap <C-k> <Plug>(neosnippet_expand_or_jump)
-                smap <C-k> <Plug>(neosnippet_expand_or_jump)
-            endif
+                " <TAB>: completion.
+                inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+                inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
 
-            inoremap <expr><C-g> neocomplcache#undo_completion()
-            inoremap <expr><C-l> neocomplcache#complete_common_string()
-            inoremap <expr><CR> neocomplcache#complete_common_string()
+                " <CR>: close popup
+                " <s-CR>: close popup and save indent.
+                inoremap <expr><s-CR> pumvisible() ? neocomplcache#close_popup()"\<CR>" : "\<CR>"
+                inoremap <expr><CR> pumvisible() ? neocomplcache#close_popup() : "\<CR>"
 
-            " <TAB>: completion.
-            inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-            inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
-
-            " <CR>: close popup
-            " <s-CR>: close popup and save indent.
-            inoremap <expr><s-CR> pumvisible() ? neocomplcache#close_popup()"\<CR>" : "\<CR>"
-            inoremap <expr><CR> pumvisible() ? neocomplcache#close_popup() : "\<CR>"
-
-            " <C-h>, <BS>: close popup and delete backword char.
-            inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
-            inoremap <expr><C-y> neocomplcache#close_popup()
+                " <C-h>, <BS>: close popup and delete backword char.
+                inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
+                inoremap <expr><C-y> neocomplcache#close_popup()
+            " }
 
             " Enable omni completion.
             autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
@@ -544,6 +696,13 @@
             autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
             autocmd FileType ruby setlocal omnifunc=rubycomplete#Complete
             autocmd FileType haskell setlocal omnifunc=necoghc#omnifunc
+
+            " Haskell post write lint and check with ghcmod
+            " $ `cabal install ghcmod` if missing and ensure
+            " ~/.cabal/bin is in your $PATH.
+            if !executable("ghcmod")
+                autocmd BufWritePost *.hs GhcModCheckAndLintAsync
+            endif
 
             " Enable heavy omni completion.
             if !exists('g:neocomplcache_omni_patterns')
@@ -590,6 +749,19 @@
         let g:indent_guides_start_level = 2
         let g:indent_guides_guide_size = 1
         let g:indent_guides_enable_on_vim_startup = 1
+    " }
+
+    " airline {
+        let g:airline_theme='powerlineish'      " airline users use the powerline theme
+        if !exists('g:airline_powerline_fonts')
+            let g:airline_left_sep='›'          " Slightly fancier separator, instead of '>'
+            let g:airline_right_sep='‹'         " Slightly fancier separator, instead of '<'
+        endif
+    " }
+
+    " vim-gitgutter {
+        " https://github.com/airblade/vim-gitgutter/issues/106
+        let g:gitgutter_realtime = 0
     " }
 
 " }
@@ -646,7 +818,7 @@
 
         " To specify a different directory in which to place the vimbackup,
         " vimviews, vimundo, and vimswap files/directories, add the following to
-        " your .vimrc.local file:
+        " your .vimrc.before.local file:
         "   let g:spf13_consolidated_directory = <full path to desired directory>
         "   eg: let g:spf13_consolidated_directory = $HOME . '/.vim/'
         if exists('g:spf13_consolidated_directory')
@@ -671,6 +843,7 @@
             endif
         endfor
     endfunction
+    call InitializeDirectories()
     " }
 
     " Initialize NERDTree as needed {
@@ -690,7 +863,7 @@
     " Strip whitespace {
     function! StripTrailingWhitespace()
         " To disable the stripping of whitespace, add the following to your
-        " .vimrc.local file:
+        " .vimrc.before.local file:
         "   let g:spf13_keep_trailing_whitespace = 1
         if !exists('g:spf13_keep_trailing_whitespace')
             " Preparation: save last search, and cursor position.
@@ -704,6 +877,29 @@
             call cursor(l, c)
         endif
     endfunction
+    " }
+
+    " Shell command {
+    function! s:RunShellCommand(cmdline)
+        botright new
+
+        setlocal buftype=nofile
+        setlocal bufhidden=delete
+        setlocal nobuflisted
+        setlocal noswapfile
+        setlocal nowrap
+        setlocal filetype=shell
+        setlocal syntax=shell
+
+        call setline(1, a:cmdline)
+        call setline(2, substitute(a:cmdline, '.', '=', 'g'))
+        execute 'silent $read !' . escape(a:cmdline, '%#')
+        setlocal nomodifiable
+        1
+    endfunction
+
+    command! -complete=file -nargs=+ Shell call s:RunShellCommand(<q-args>)
+    " e.g. Grep current file for <search_term>: Shell grep -Hn <search_term> %
     " }
 
 " }
@@ -726,8 +922,4 @@
             source ~/.gvimrc.local
         endif
     endif
-" }
-
-" Finish local initializations {
-    call InitializeDirectories()
 " }
